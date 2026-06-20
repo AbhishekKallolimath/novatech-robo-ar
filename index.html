@@ -1,0 +1,714 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <!-- 
+        ═══════════════════════════════════════════════════
+        BRANDING: Replace the SVG logo below with <img src="logo.png"> 
+        COMPANY: Novatech Robo Pvt Ltd
+        ═══════════════════════════════════════════════════
+    -->
+    <title>Novatech Robo Pvt Ltd</title>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,600;0,700;1,400&display=swap" rel="stylesheet">
+
+    <!-- A-Frame & MindAR -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js">
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/aframe-extras@7.2.0/dist/aframe-extras.min.js">
+    </script>
+
+    <style>
+        /* ───────── RESET & BASE ───────── */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            overflow: hidden;
+            background: #0a0a12;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            height: 100vh;
+            width: 100vw;
+        }
+
+        /* ───────── AR SCENE CONTAINER ───────── */
+        a-scene {
+            display: block;
+            width: 100vw;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+
+        /* ───────── OVERLAY LAYER ───────── */
+        .ar-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 10;
+            pointer-events: none;
+            /* allow clicks to pass to AR */;
+        }
+
+        /* ───────── VIGNETTE ───────── */
+        .vignette {
+            position: fixed;
+            inset: 0;
+            z-index: 2;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 50% 50%, transparent 60%, rgba(10, 10, 18, 0.55) 100%);
+        }
+
+        /* ───────── FLOATING ORBS ───────── */
+        .orb {
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 1;
+            opacity: 0.5;
+            animation: orbFloat 12s ease-in-out infinite alternate;
+        }
+
+        .orb--1 {
+            width: 400px;
+            height: 400px;
+            top: -120px;
+            right: -80px;
+            background: radial-gradient(circle, #7c3aed, transparent 70%);
+            animation-duration: 14s;
+            animation-delay: 0s;
+        }
+
+        .orb--2 {
+            width: 500px;
+            height: 500px;
+            bottom: -200px;
+            left: -150px;
+            background: radial-gradient(circle, #0ea5e9, transparent 70%);
+            animation-duration: 16s;
+            animation-delay: 2s;
+        }
+
+        .orb--3 {
+            width: 300px;
+            height: 300px;
+            top: 40%;
+            left: 60%;
+            background: radial-gradient(circle, #a855f7, transparent 70%);
+            animation-duration: 18s;
+            animation-delay: 4s;
+            opacity: 0.3;
+        }
+
+        @keyframes orbFloat {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            33% {
+                transform: translate(30px, -40px) scale(1.05);
+            }
+            66% {
+                transform: translate(-20px, 30px) scale(0.95);
+            }
+            100% {
+                transform: translate(10px, -20px) scale(1.02);
+            }
+        }
+
+        /* ───────── GLOW LINE (top) ───────── */
+        .glow-line {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            z-index: 20;
+            background: linear-gradient(90deg,
+                    transparent 0%,
+                    #7c3aed 20%,
+                    #0ea5e9 50%,
+                    #a855f7 80%,
+                    transparent 100%);
+            background-size: 200% 100%;
+            animation: shimmerLine 4s linear infinite;
+            pointer-events: none;
+            opacity: 0.7;
+        }
+
+        @keyframes shimmerLine {
+            0% {
+                background-position: -200% 0;
+            }
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        /* ───────── STATUS BAR ───────── */
+        #status {
+            position: fixed;
+            top: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 30;
+            padding: 14px 36px;
+            border-radius: 60px;
+            font-family: 'Inter', sans-serif;
+            font-size: 16px;
+            font-weight: 600;
+            letter-spacing: 0.02em;
+            color: #fff;
+            background: rgba(20, 20, 35, 0.55);
+            backdrop-filter: blur(20px) saturate(1.4);
+            -webkit-backdrop-filter: blur(20px) saturate(1.4);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow:
+                0 8px 40px rgba(0, 0, 0, 0.5),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            pointer-events: none;
+            user-select: none;
+            white-space: nowrap;
+            transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #status .status-icon {
+            display: inline-block;
+            font-size: 20px;
+            line-height: 1;
+            animation: iconPulse 2.4s ease-in-out infinite;
+        }
+
+        #status .status-text {
+            display: inline-block;
+            background: linear-gradient(135deg, #f0f0ff 0%, #c4b5fd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 600;
+        }
+
+        #status .status-dot {
+            display: inline-block;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4ade80;
+            box-shadow: 0 0 16px rgba(74, 222, 128, 0.5);
+            animation: dotPulse 1.8s ease-in-out infinite;
+            margin-left: 4px;
+        }
+
+        #status.scanning .status-dot {
+            background: #facc15;
+            box-shadow: 0 0 16px rgba(250, 204, 21, 0.5);
+        }
+
+        #status.robot .status-dot {
+            background: #a78bfa;
+            box-shadow: 0 0 20px rgba(167, 139, 250, 0.6);
+        }
+
+        #status.video .status-dot {
+            background: #60a5fa;
+            box-shadow: 0 0 20px rgba(96, 165, 250, 0.6);
+        }
+
+        @keyframes iconPulse {
+            0%,
+            100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        @keyframes dotPulse {
+            0%,
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+            50% {
+                opacity: 0.5;
+                transform: scale(0.7);
+            }
+        }
+
+        /* ───────── STATUS BAR – RESPONSIVE ───────── */
+        @media (max-width: 640px) {
+            #status {
+                top: 18px;
+                padding: 10px 18px;
+                font-size: 13px;
+                gap: 8px;
+                border-radius: 40px;
+            }
+            #status .status-icon {
+                font-size: 16px;
+            }
+            #status .status-dot {
+                width: 6px;
+                height: 6px;
+            }
+            .orb--1 {
+                width: 200px;
+                height: 200px;
+                top: -60px;
+                right: -40px;
+            }
+            .orb--2 {
+                width: 260px;
+                height: 260px;
+                bottom: -100px;
+                left: -80px;
+            }
+            .orb--3 {
+                width: 160px;
+                height: 160px;
+                top: 50%;
+                left: 70%;
+            }
+        }
+
+        @media (max-width: 400px) {
+            #status {
+                top: 12px;
+                padding: 8px 14px;
+                font-size: 11px;
+                gap: 6px;
+                border-radius: 30px;
+            }
+            #status .status-icon {
+                font-size: 14px;
+            }
+        }
+
+        /* ───────── CORNER ACCENTS ───────── */
+        .corner {
+            position: fixed;
+            z-index: 5;
+            pointer-events: none;
+            opacity: 0.3;
+        }
+        .corner--tl {
+            top: 24px;
+            left: 24px;
+            border-top: 2px solid rgba(167, 139, 250, 0.4);
+            border-left: 2px solid rgba(167, 139, 250, 0.4);
+            width: 40px;
+            height: 40px;
+            border-radius: 4px 0 0 0;
+        }
+        .corner--tr {
+            top: 24px;
+            right: 24px;
+            border-top: 2px solid rgba(167, 139, 250, 0.4);
+            border-right: 2px solid rgba(167, 139, 250, 0.4);
+            width: 40px;
+            height: 40px;
+            border-radius: 0 4px 0 0;
+        }
+        .corner--bl {
+            bottom: 24px;
+            left: 24px;
+            border-bottom: 2px solid rgba(167, 139, 250, 0.4);
+            border-left: 2px solid rgba(167, 139, 250, 0.4);
+            width: 40px;
+            height: 40px;
+            border-radius: 0 0 0 4px;
+        }
+        .corner--br {
+            bottom: 24px;
+            right: 24px;
+            border-bottom: 2px solid rgba(167, 139, 250, 0.4);
+            border-right: 2px solid rgba(167, 139, 250, 0.4);
+            width: 40px;
+            height: 40px;
+            border-radius: 0 0 4px 0;
+        }
+
+        @media (max-width: 640px) {
+            .corner {
+                opacity: 0.15;
+            }
+            .corner--tl,
+            .corner--tr,
+            .corner--bl,
+            .corner--br {
+                width: 24px;
+                height: 24px;
+                border-width: 1.5px;
+            }
+            .corner--tl,
+            .corner--tr {
+                top: 14px;
+            }
+            .corner--bl,
+            .corner--br {
+                bottom: 14px;
+            }
+            .corner--tl,
+            .corner--bl {
+                left: 14px;
+            }
+            .corner--tr,
+            .corner--br {
+                right: 14px;
+            }
+        }
+
+        /* ───────── BOTTOM LABEL ───────── */
+        .brand-label {
+            position: fixed;
+            bottom: 28px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 15;
+            font-family: 'Inter', sans-serif;
+            font-size: 11px;
+            font-weight: 400;
+            letter-spacing: 0.12em;
+            color: rgba(255, 255, 255, 0.2);
+            text-transform: uppercase;
+            pointer-events: none;
+            user-select: none;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 6px 18px;
+            border-radius: 40px;
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: opacity 0.6s ease;
+        }
+
+        .brand-label span {
+            background: linear-gradient(135deg, rgba(167, 139, 250, 0.7), rgba(96, 165, 250, 0.5));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        @media (max-width: 640px) {
+            .brand-label {
+                bottom: 18px;
+                font-size: 9px;
+                padding: 4px 14px;
+                letter-spacing: 0.1em;
+            }
+        }
+
+        /* ───────── TOP LEFT BRAND HEADER ───────── */
+        .brand-header {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            z-index: 40;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            background: rgba(10, 10, 18, 0.45);
+            backdrop-filter: blur(16px) saturate(1.6);
+            -webkit-backdrop-filter: blur(16px) saturate(1.6);
+            padding: 8px 18px 8px 10px;
+            border-radius: 60px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+            pointer-events: none;
+            user-select: none;
+            transition: all 0.3s ease;
+        }
+
+        /* ── Logo placeholder ── */
+        .brand-header .logo-wrapper {
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #7c3aed, #0ea5e9);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(124, 58, 237, 0.3);
+        }
+
+        .brand-header .logo-wrapper svg {
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: white;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        /* ── Company Name ── */
+        .brand-header .company-name {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 15px;
+            letter-spacing: -0.02em;
+            color: rgba(255, 255, 255, 0.9);
+            white-space: nowrap;
+            text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .brand-header .company-name .highlight {
+            background: linear-gradient(135deg, #a78bfa, #60a5fa);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+        }
+
+        @media (max-width: 640px) {
+            .brand-header {
+                top: 12px;
+                left: 12px;
+                padding: 6px 12px 6px 8px;
+                gap: 8px;
+                border-radius: 40px;
+            }
+            .brand-header .logo-wrapper {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px;
+            }
+            .brand-header .logo-wrapper svg {
+                width: 16px;
+                height: 16px;
+            }
+            .brand-header .company-name {
+                font-size: 12px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .brand-header .company-name {
+                font-size: 10px;
+            }
+            .brand-header .logo-wrapper {
+                width: 22px;
+                height: 22px;
+                border-radius: 6px;
+            }
+            .brand-header .logo-wrapper svg {
+                width: 14px;
+                height: 14px;
+            }
+        }
+
+        /* ───────── SCREEN GLARE (subtle) ───────── */
+        .screen-glare {
+            position: fixed;
+            inset: 0;
+            z-index: 3;
+            pointer-events: none;
+            background:
+                radial-gradient(ellipse at 20% 30%, rgba(255, 255, 255, 0.02) 0%, transparent 60%),
+                radial-gradient(ellipse at 80% 70%, rgba(167, 139, 250, 0.02) 0%, transparent 50%);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- ═══ DECORATIVE OVERLAYS ═══ -->
+    <div class="ar-overlay"></div>
+
+    <!-- Vignette -->
+    <div class="vignette"></div>
+
+    <!-- Screen Glare -->
+    <div class="screen-glare"></div>
+
+    <!-- Glow Line -->
+    <div class="glow-line"></div>
+
+    <!-- Floating Orbs -->
+    <div class="orb orb--1"></div>
+    <div class="orb orb--2"></div>
+    <div class="orb orb--3"></div>
+
+    <!-- Corner Accents -->
+    <div class="corner corner--tl"></div>
+    <div class="corner corner--tr"></div>
+    <div class="corner corner--bl"></div>
+    <div class="corner corner--br"></div>
+
+    <!-- ═══ TOP LEFT BRAND HEADER ═══ -->
+    <div class="brand-header">
+        <!-- 
+            ══════════════════════════════════════════════
+            REPLACE THE SVG BELOW WITH YOUR LOGO
+            Example: <img src="logo.png" alt="Novatech Robo" style="width:100%; height:100%; object-fit:contain;">
+            ══════════════════════════════════════════════
+        -->
+        <div class="logo-wrapper">
+            <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <rect x="2" y="6" width="20" height="12" rx="2" />
+                <circle cx="8" cy="12" r="1.5" fill="white" stroke="none" />
+                <circle cx="16" cy="12" r="1.5" fill="white" stroke="none" />
+                <path d="M6 16 L18 16" stroke-width="1.5" />
+                <path d="M10 4 L12 6 L14 4" stroke-width="1.5" />
+            </svg>
+        </div>
+        <span class="company-name">
+            <span class="highlight">Novatech</span> Robo Pvt Ltd
+        </span>
+    </div>
+
+    <!-- ═══ STATUS BAR ═══ -->
+    <div id="status">
+        <span class="status-icon">📷</span>
+        <span class="status-text">Scan an Image</span>
+        <span class="status-dot"></span>
+    </div>
+
+    <!-- ═══ BOTTOM LABEL ═══ -->
+    <div class="brand-label"><span>✦ Novatech Robo AR</span></div>
+
+    <!-- ═══ A-FRAME SCENE ═══ -->
+    <a-scene mindar-image="imageTargetSrc: targets.mind;" color-space="sRGB" renderer="colorManagement:true" vr-mode-ui="enabled:false" device-orientation-permission-ui="enabled:false">
+
+        <a-assets>
+
+            <!-- Robot -->
+            <a-asset-item id="danceModel" src="Dance.glb">
+            </a-asset-item>
+
+            <!-- Videos -->
+            <video id="video1" src="video1.mp4" muted loop playsinline webkit-playsinline crossorigin="anonymous" preload="auto">
+            </video>
+            <video id="video2" src="video2.mp4" muted loop playsinline webkit-playsinline crossorigin="anonymous" preload="auto">
+            </video>
+            <video id="video3" src="video3.mp4" muted loop playsinline webkit-playsinline crossorigin="anonymous" preload="auto">
+            </video>
+            <video id="video4" src="video4.mp4" muted loop playsinline webkit-playsinline crossorigin="anonymous" preload="auto">
+            </video>
+
+        </a-assets>
+
+        <a-camera position="0 0 0" look-controls="enabled:false">
+        </a-camera>
+
+        <!-- TARGET 0 – ROBOT -->
+        <a-entity id="target0" mindar-image-target="targetIndex:0">
+            <a-gltf-model src="#danceModel" position="0 0 0" rotation="0 0 0" scale="0.4 0.4 0.4" animation-mixer>
+            </a-gltf-model>
+        </a-entity>
+
+        <!-- TARGET 1 -->
+        <a-entity id="target1" mindar-image-target="targetIndex:1">
+            <a-video src="#video1" width="2" height="1.2" position="0 0 0">
+            </a-video>
+        </a-entity>
+
+        <!-- TARGET 2 -->
+        <a-entity id="target2" mindar-image-target="targetIndex:2">
+            <a-video src="#video2" width="2" height="1.2" position="0 0 0">
+            </a-video>
+        </a-entity>
+
+        <!-- TARGET 3 -->
+        <a-entity id="target3" mindar-image-target="targetIndex:3">
+            <a-video src="#video3" width="2" height="1.2" position="0 0 0">
+            </a-video>
+        </a-entity>
+
+        <!-- TARGET 4 -->
+        <a-entity id="target4" mindar-image-target="targetIndex:4">
+            <a-video src="#video4" width="2" height="1.2" position="0 0 0">
+            </a-video>
+        </a-entity>
+
+    </a-scene>
+
+    <!-- ═══ SCRIPTS ═══ -->
+    <script>
+        const status = document.getElementById("status");
+        const iconEl = status.querySelector(".status-icon");
+        const textEl = status.querySelector(".status-text");
+        const dotEl = status.querySelector(".status-dot");
+
+        // ── helpers ──
+        function setStatus(icon, text, className) {
+            iconEl.textContent = icon;
+            textEl.textContent = text;
+            // remove all state classes
+            status.classList.remove("scanning", "robot", "video");
+            if (className) status.classList.add(className);
+        }
+
+        // ── videos ──
+        const v1 = document.querySelector("#video1");
+        const v2 = document.querySelector("#video2");
+        const v3 = document.querySelector("#video3");
+        const v4 = document.querySelector("#video4");
+
+        // ── TARGET 0 ──
+        document.querySelector("#target0").addEventListener("targetFound", () => {
+            setStatus("🤖", "Robot Dancing", "robot");
+        });
+        document.querySelector("#target0").addEventListener("targetLost", () => {
+            setStatus("📷", "Scan an Image", "scanning");
+        });
+
+        // ── TARGET 1 ──
+        document.querySelector("#target1").addEventListener("targetFound", () => {
+            setStatus("🎥", "Playing Video 1", "video");
+            v1.play();
+        });
+        document.querySelector("#target1").addEventListener("targetLost", () => {
+            v1.pause();
+            v1.currentTime = 0;
+        });
+
+        // ── TARGET 2 ──
+        document.querySelector("#target2").addEventListener("targetFound", () => {
+            setStatus("🎥", "Playing Video 2", "video");
+            v2.play();
+        });
+        document.querySelector("#target2").addEventListener("targetLost", () => {
+            v2.pause();
+            v2.currentTime = 0;
+        });
+
+        // ── TARGET 3 ──
+        document.querySelector("#target3").addEventListener("targetFound", () => {
+            setStatus("🎥", "Playing Video 3", "video");
+            v3.play();
+        });
+        document.querySelector("#target3").addEventListener("targetLost", () => {
+            v3.pause();
+            v3.currentTime = 0;
+        });
+
+        // ── TARGET 4 ──
+        document.querySelector("#target4").addEventListener("targetFound", () => {
+            setStatus("🎥", "Playing Video 4", "video");
+            v4.play();
+        });
+        document.querySelector("#target4").addEventListener("targetLost", () => {
+            v4.pause();
+            v4.currentTime = 0;
+        });
+
+        // ── initial state ──
+        setStatus("📷", "Scan an Image", "scanning");
+    </script>
+
+</body>
+</html>
